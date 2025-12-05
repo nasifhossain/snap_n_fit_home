@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
     await setAuthToken(user.id);
 
     return NextResponse.json(
-      { message: 'Login successful', userId: user.id },
+      { success: true, message: 'Login successful', userId: user.id },
       { status: 200 }
     );
   } catch (error) {

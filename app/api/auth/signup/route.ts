@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
     await setAuthToken(userId);
 
     return NextResponse.json(
-      { message: 'Account created successfully', userId },
+      { success: true, message: 'Account created successfully', userId },
       { status: 201 }
     );
   } catch (error) {

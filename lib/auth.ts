@@ -1,8 +1,9 @@
 import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
+import { SignJWT, jwtVerify } from 'jose';
 import { cookies } from 'next/headers';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret-key-change-in-production';
+const secret = new TextEncoder().encode(JWT_SECRET);
 
 export async function hashPassword(password: string): Promise<string> {
   return bcrypt.hash(password, 12);
@@ -12,26 +13,32 @@ export async function verifyPassword(password: string, hashedPassword: string): 
   return bcrypt.compare(password, hashedPassword);
 }
 
-export function generateToken(userId: string): string {
-  return jwt.sign({ userId }, JWT_SECRET, { expiresIn: '24h' });
+export async function generateToken(userId: string): Promise<string> {
+  const token = await new SignJWT({ userId })
+    .setProtectedHeader({ alg: 'HS256' })
+    .setExpirationTime('24h')
+    .setIssuedAt()
+    .sign(secret);
+  return token;
 }
 
-export function verifyToken(token: string): { userId: string } | null {
+export async function verifyToken(token: string): Promise<{ userId: string } | null> {
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as { userId: string };
-    return decoded;
+    const { payload } = await jwtVerify(token, secret);
+    return { userId: payload.userId as string };
   } catch {
     return null;
   }
 }
 
 export async function setAuthToken(userId: string): Promise<void> {
-  const token = generateToken(userId);
+  const token = await generateToken(userId);
   const cookieStore = await cookies();
   cookieStore.set('auth-token', token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
+    path: '/',
     maxAge: 24 * 60 * 60 // 24 hours
   });
 }
@@ -51,5 +58,5 @@ export async function getCurrentUser(): Promise<{ userId: string } | null> {
   const token = await getAuthToken();
   if (!token) return null;
   
-  return verifyToken(token);
+  return await verifyToken(token);
 }
