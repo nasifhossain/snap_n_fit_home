@@ -6,10 +6,13 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "enter-mysql": "docker exec -it $(docker ps -q --filter 'name=mysql') mysql -u root -p"
   },
   "dependencies": {
+    "@prisma/client": "^7.1.0",
     "next": "16.0.7",
+    "prisma": "^7.1.0",
     "react": "19.2.0",
     "react-dom": "19.2.0"
   },
