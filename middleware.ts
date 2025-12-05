@@ -5,7 +5,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret-key-change-in-prod
 const secret = new TextEncoder().encode(JWT_SECRET);
 
 // Routes that require authentication
-const protectedRoutes = ['/', '/reading-list'];
+const protectedRoutes = ['/reading-list'];
 
 // Routes that should redirect to dashboard if already authenticated
 const authRoutes = ['/login', '/signup'];
