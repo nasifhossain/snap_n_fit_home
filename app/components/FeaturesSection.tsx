@@ -20,14 +20,15 @@ const features = [
 
 export default function FeaturesSection() {
   return (
-    <section className="bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-100 py-16 sm:py-20">
+    <section className="bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-100 py-12 sm:py-16">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         <div className="mx-auto max-w-2xl lg:text-center">
-          <p className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
+          <h2 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">
             Everything you need to organize your reading
-          </p>
+          </h2>
+          <p className="mt-2 text-base text-gray-600">Powerful tools designed for book lovers</p>
         </div>
-        <div className="mx-auto mt-12 max-w-2xl lg:max-w-none">
+        <div className="mx-auto mt-8 max-w-2xl lg:max-w-none">
           <dl className="grid max-w-xl grid-cols-1 gap-6 lg:max-w-none lg:grid-cols-3">
             {features.map((feature, index) => {
               const gradients = [

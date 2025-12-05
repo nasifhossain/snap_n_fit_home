@@ -14,8 +14,17 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Readers",
-  description: "Readlist management platform for book enthusiasts",
+  title: {
+    default: "Readers - Personal Reading Journey & Book Tracking",
+    template: "%s | Readers"
+  },
+  description: "Track, organize, and discover your favorite books with Readers. Join thousands of book lovers managing their personal libraries. Start your reading journey today!",
+  metadataBase: new URL('https://readers.app'),
+  viewport: 'width=device-width, initial-scale=1',
+  robots: {
+    index: true,
+    follow: true,
+  }
 };
 
 export default function RootLayout({
