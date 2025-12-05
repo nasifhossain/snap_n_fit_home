@@ -43,11 +43,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Set auth token
-    await setAuthToken(user.id);
+    // Set auth token with full profile
+    await setAuthToken({
+      id: user.id,
+      name: user.name,
+      email: user.email
+    });
 
     return NextResponse.json(
-      { success: true, message: 'Login successful', userId: user.id },
+      { 
+        success: true, 
+        message: 'Login successful', 
+        user: {
+          userId: user.id,
+          name: user.name,
+          email: user.email
+        }
+      },
       { status: 200 }
     );
   } catch (error) {

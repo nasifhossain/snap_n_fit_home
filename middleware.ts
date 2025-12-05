@@ -16,10 +16,16 @@ export async function middleware(request: NextRequest) {
 
   // Check if user is authenticated
   let isAuthenticated = false;
+  let userProfile = null;
   if (token) {
     try {
-      await jwtVerify(token, secret);
+      const { payload } = await jwtVerify(token, secret);
       isAuthenticated = true;
+      userProfile = {
+        userId: payload.userId as string,
+        name: payload.name as string,
+        email: payload.email as string
+      };
     } catch {
       isAuthenticated = false;
     }
@@ -40,6 +46,13 @@ export async function middleware(request: NextRequest) {
     url.pathname = redirectTo;
     url.searchParams.delete('redirectTo');
     return NextResponse.redirect(url);
+  }
+
+  // For authenticated users accessing protected routes, inject profile storage script
+  if (protectedRoutes.includes(pathname) && isAuthenticated && userProfile) {
+    const response = NextResponse.next();
+    response.headers.set('X-User-Profile', JSON.stringify(userProfile));
+    return response;
   }
 
   return NextResponse.next();

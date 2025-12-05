@@ -38,11 +38,23 @@ export async function POST(request: NextRequest) {
       [userId, name, email, passwordHash]
     );
 
-    // Set auth token for automatic login
-    await setAuthToken(userId);
+    // Set auth token for automatic login with full profile
+    await setAuthToken({
+      id: userId,
+      name: name,
+      email: email
+    });
 
     return NextResponse.json(
-      { success: true, message: 'Account created successfully', userId },
+      { 
+        success: true, 
+        message: 'Account created successfully', 
+        user: {
+          userId: userId,
+          name: name,
+          email: email
+        }
+      },
       { status: 201 }
     );
   } catch (error) {

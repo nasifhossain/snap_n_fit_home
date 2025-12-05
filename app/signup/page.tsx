@@ -38,6 +38,11 @@ export default function SignUp() {
     const response = await api.post('/api/auth/signup', formData);
 
     if (response.success) {
+      // Store user profile in localStorage
+      if (response.data?.user) {
+        localStorage.setItem('userProfile', JSON.stringify(response.data.user));
+      }
+      
       // Get redirect destination from URL params or default to reading list
       const urlParams = new URLSearchParams(window.location.search);
       const redirectTo = urlParams.get('redirectTo') || '/reading-list';

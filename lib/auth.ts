@@ -13,8 +13,12 @@ export async function verifyPassword(password: string, hashedPassword: string): 
   return bcrypt.compare(password, hashedPassword);
 }
 
-export async function generateToken(userId: string): Promise<string> {
-  const token = await new SignJWT({ userId })
+export async function generateToken(userProfile: { id: string; name: string; email: string }): Promise<string> {
+  const token = await new SignJWT({ 
+    userId: userProfile.id,
+    name: userProfile.name,
+    email: userProfile.email
+  })
     .setProtectedHeader({ alg: 'HS256' })
     .setExpirationTime('24h')
     .setIssuedAt()
@@ -22,17 +26,21 @@ export async function generateToken(userId: string): Promise<string> {
   return token;
 }
 
-export async function verifyToken(token: string): Promise<{ userId: string } | null> {
+export async function verifyToken(token: string): Promise<{ userId: string; name: string; email: string } | null> {
   try {
     const { payload } = await jwtVerify(token, secret);
-    return { userId: payload.userId as string };
+    return { 
+      userId: payload.userId as string,
+      name: payload.name as string,
+      email: payload.email as string
+    };
   } catch {
     return null;
   }
 }
 
-export async function setAuthToken(userId: string): Promise<void> {
-  const token = await generateToken(userId);
+export async function setAuthToken(userProfile: { id: string; name: string; email: string }): Promise<void> {
+  const token = await generateToken(userProfile);
   const cookieStore = await cookies();
   cookieStore.set('auth-token', token, {
     httpOnly: true,
@@ -54,7 +62,7 @@ export async function removeAuthToken(): Promise<void> {
   cookieStore.delete('auth-token');
 }
 
-export async function getCurrentUser(): Promise<{ userId: string } | null> {
+export async function getCurrentUser(): Promise<{ userId: string; name: string; email: string } | null> {
   const token = await getAuthToken();
   if (!token) return null;
   
