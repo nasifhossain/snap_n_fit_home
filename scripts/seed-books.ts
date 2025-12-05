@@ -9,7 +9,14 @@ async function seedBooks() {
     { id: 'book_5', title: 'You Don\'t Know JS', author: 'Kyle Simpson' },
     { id: 'book_6', title: 'Designing Data-Intensive Applications', author: 'Martin Kleppmann' },
     { id: 'book_7', title: 'The Clean Coder', author: 'Robert C. Martin' },
-    { id: 'book_8', title: 'Refactoring', author: 'Martin Fowler' }
+    { id: 'book_8', title: 'Refactoring', author: 'Martin Fowler' },
+    { id: 'book_9', title: 'System Design Interview', author: 'Alex Xu' },
+    { id: 'book_10', title: 'The Phoenix Project', author: 'Gene Kim' },
+    { id: 'book_11', title: 'Code Complete', author: 'Steve McConnell' },
+    { id: 'book_12', title: 'Cracking the Coding Interview', author: 'Gayle Laakmann McDowell' },
+    { id: 'book_13', title: 'The Mythical Man-Month', author: 'Frederick P. Brooks Jr.' },
+    { id: 'book_14', title: 'Clean Architecture', author: 'Robert C. Martin' },
+    { id: 'book_15', title: 'The DevOps Handbook', author: 'Gene Kim' }
   ];
 
   console.log('Seeding books...');
