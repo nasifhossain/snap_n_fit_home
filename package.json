@@ -10,6 +10,7 @@
     "enter-mysql": "docker exec -it $(docker ps -q --filter 'name=mysql') mysql -u root -p"
   },
   "dependencies": {
+    "@heroicons/react": "^2.2.0",
     "@prisma/client": "^7.1.0",
     "bcryptjs": "^3.0.3",
     "jose": "^6.1.3",
