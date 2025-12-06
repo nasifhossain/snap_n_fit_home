@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth';
 import { executeQuery, executeQuerySingle } from '@/lib/database';
+import { prisma } from '@/lib/prsimadb';
+import { read } from 'fs';
 
 export async function POST(request: NextRequest) {
   try {
@@ -23,10 +25,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if the book exists
-    const bookExists = await executeQuerySingle(
-      'SELECT id FROM books WHERE id = ?',
-      [bookId]
-    );
+   const bookExists = await prisma.book.findUnique({
+      where: { id: bookId }
+   })
 
     if (!bookExists) {
       return NextResponse.json(
@@ -36,48 +37,66 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if user already has a record for this book
-    const existingRecord = await executeQuerySingle(
-      'SELECT id FROM user_books WHERE userId = ? AND bookId = ?',
-      [user.userId, bookId]
-    );
+    const existingRecord = await prisma.userBook.findUnique({
+      where:{
+        userId_bookId: {
+          userId: user.userId,
+          bookId: bookId
+        }
+      }
+    })
 
     if (status === 'unread') {
       // Remove the record if it exists
       if (existingRecord) {
-        await executeQuery(
-          'DELETE FROM user_books WHERE userId = ? AND bookId = ?',
-          [user.userId, bookId]
-        );
+        prisma.userBook.delete({
+          where:{
+            id: existingRecord.id
+          }
+        })
       }
     } else {
       // Insert or update record
       if (existingRecord) {
-        await executeQuery(
-          'UPDATE user_books SET status = ?, updatedAt = NOW() WHERE userId = ? AND bookId = ?',
-          [status, user.userId, bookId]
-        );
+       prisma.userBook.update({
+        where:{
+          id: existingRecord.id
+        },
+        data:{
+          status: (existingRecord.status==="read")?"unread":"read",
+          updatedAt: new Date()
+        }
+       });
       } else {
         // Generate a new ID for the record
         const newId = `ub_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-        await executeQuery(
-          'INSERT INTO user_books (id, userId, bookId, status, updatedAt) VALUES (?, ?, ?, ?, NOW())',
-          [newId, user.userId, bookId, status]
-        );
+        await prisma.userBook.create({
+          data:{
+            id: newId,
+            userId: user.userId,
+            bookId: bookId,
+            status: status,
+            updatedAt: new Date()
+          }
+        })
       }
     }
 
     // Get updated read count for this book
-    const readCount = await executeQuerySingle<{ count: number }>(
-      'SELECT COUNT(*) as count FROM user_books WHERE bookId = ? AND status = ?',
-      [bookId, 'read']
-    );
+    const readBooks = await prisma.userBook.findMany({
+      where:{
+        bookId: bookId,
+        status: 'read'
+      }
+    });
+    const readCount = readBooks?readBooks.length:0;
 
     return NextResponse.json({
       success: true,
       data: {
         bookId,
         status,
-        readByCount: readCount?.count || 0
+        readByCount: readCount || 0
       }
     });
 

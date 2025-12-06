@@ -1,26 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth';
-import { executeQuery, executeQuerySingle } from '@/lib/database';
+import { prisma } from '@/lib/prsimadb';
+import { NextRequest, NextResponse } from 'next/server';
 
-interface Book {
-  id: string;
-  title: string;
-  author: string;
-  createdAt: string;
-}
-
-interface UserBook {
-  id: string;
-  userId: string;
-  bookId: string;
-  status: string;
-  updatedAt: string;
-}
-
-interface BookWithStatus extends Book {
-  readByCount: number;
-  userStatus: 'read' | 'unread';
-}
 
 export async function GET(request: NextRequest) {
   try {
@@ -32,39 +13,63 @@ export async function GET(request: NextRequest) {
         { status: 401 }
       );
     }
+    // Run independent queries in parallel for better performance
+    const [rawBooks, totalBooks, booksRead] = await Promise.all([
+      // 1. Fetch Books with counts and user status
+      prisma.book.findMany({
+        orderBy: {
+          createdAt: 'desc',
+        },
+        select: {
+          id: true,
+          title: true,
+          author: true,
+          createdAt: true,
+          // Count how many people have read this book
+          _count: {
+            select: {
+              userBooks: {
+                where: { status: 'read' },
+              },
+            },
+          },
+          // Get the current user's specific status for this book
+          userBooks: {
+            where: {
+              userId: user.userId, // CAUTION: Ensure this matches your schema type (String/Int)
+            },
+            select: {
+              status: true,
+            },
+            take: 1,
+          },
+        },
+      }),
 
-    // Get all books with read counts and user's status
-    const booksQuery = `
-      SELECT 
-        b.id,
-        b.title,
-        b.author,
-        b.createdAt,
-        COUNT(CASE WHEN ub.status = 'read' THEN 1 END) as readByCount,
-        COALESCE(user_status.status, 'unread') as userStatus
-      FROM books b
-      LEFT JOIN user_books ub ON b.id = ub.bookId AND ub.status = 'read'
-      LEFT JOIN user_books user_status ON b.id = user_status.bookId AND user_status.userId = ?
-      GROUP BY b.id, b.title, b.author, b.createdAt, user_status.status
-      ORDER BY b.createdAt DESC
-    `;
+      // 2. Get Total Books count
+      prisma.book.count(),
 
-    const books = await executeQuery<BookWithStatus>(booksQuery, [user.userId]);
+      // 3. Get Count of books read by current user
+      prisma.userBook.count({
+        where: {
+          userId: user.userId,
+          status: 'read',
+        },
+      }),
+    ]);
 
-    // Get user's reading statistics
-    const statsQuery = `
-      SELECT 
-        (SELECT COUNT(*) FROM books) as totalBooks,
-        (SELECT COUNT(*) FROM user_books WHERE userId = ? AND status = 'read') as booksRead
-    `;
+    // Flatten the Prisma result to match your frontend expectation
+    const books = rawBooks.map((book) => ({
+      id: book.id,
+      title: book.title,
+      author: book.author,
+      createdAt: book.createdAt,
+      readByCount: book._count.userBooks,
+      // If no record exists for this user, default to 'unread'
+      userStatus: book.userBooks[0]?.status ?? 'unread',
+    }));
 
-    const stats = await executeQuerySingle<{ totalBooks: number; booksRead: number }>(
-      statsQuery, 
-      [user.userId]
-    );
-
-    const totalBooks = stats?.totalBooks || 0;
-    const booksRead = stats?.booksRead || 0;
+    // Calculate completion percentage
     const completion = totalBooks > 0 ? Math.round((booksRead / totalBooks) * 100) : 0;
 
     return NextResponse.json({
