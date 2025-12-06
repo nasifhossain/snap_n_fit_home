@@ -14,7 +14,7 @@ export async function verifyPassword(password: string, hashedPassword: string): 
 }
 
 export async function generateToken(userProfile: { id: string; name: string; email: string }): Promise<string> {
-  const token = await new SignJWT({ 
+  const token = await new SignJWT({
     userId: userProfile.id,
     name: userProfile.name,
     email: userProfile.email
@@ -29,7 +29,7 @@ export async function generateToken(userProfile: { id: string; name: string; ema
 export async function verifyToken(token: string): Promise<{ userId: string; name: string; email: string } | null> {
   try {
     const { payload } = await jwtVerify(token, secret);
-    return { 
+    return {
       userId: payload.userId as string,
       name: payload.name as string,
       email: payload.email as string
@@ -65,6 +65,6 @@ export async function removeAuthToken(): Promise<void> {
 export async function getCurrentUser(): Promise<{ userId: string; name: string; email: string } | null> {
   const token = await getAuthToken();
   if (!token) return null;
-  
+
   return await verifyToken(token);
 }
