@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { executeQuerySingle, executeQuery } from '@/lib/database';
 import { hashPassword, setAuthToken } from '@/lib/auth';
 import { randomBytes } from 'crypto';
+import { prisma } from '@/lib/prsimadb';
 
 export async function POST(request: NextRequest) {
   try {
@@ -15,11 +16,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const existingUser = await prisma.user.findUnique({
+      where: { email: email }
+    });
+    console.log(existingUser);
     // Check if user already exists
-    const existingUser = await executeQuerySingle(
-      'SELECT id FROM users WHERE email = ?',
-      [email]
-    );
+    // const existingUser = await executeQuerySingle(
+    //   'SELECT id FROM users WHERE email = ?',
+    //   [email]
+    // );
 
     if (existingUser) {
       return NextResponse.json(
@@ -33,10 +38,18 @@ export async function POST(request: NextRequest) {
     const passwordHash = await hashPassword(password);
     
     // Create user
-    await executeQuery(
-      'INSERT INTO users (id, name, email, passwordHash) VALUES (?, ?, ?, ?)',
-      [userId, name, email, passwordHash]
-    );
+    await prisma.user.create({
+      data: {
+        id: userId,
+        name: name,
+        email: email,
+        passwordHash: passwordHash
+      }
+    })
+    // await executeQuery(
+    //   'INSERT INTO users (id, name, email, passwordHash) VALUES (?, ?, ?, ?)',
+    //   [userId, name, email, passwordHash]
+    // );
 
     // Set auth token for automatic login with full profile
     await setAuthToken({

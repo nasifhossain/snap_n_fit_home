@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { executeQuerySingle } from '@/lib/database';
 import { verifyPassword, setAuthToken } from '@/lib/auth';
+import { prisma } from '@/lib/prsimadb';
 
 interface User {
   id: string;
@@ -21,11 +22,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Find user by email
-    const user = await executeQuerySingle<User>(
-      'SELECT id, name, email, passwordHash FROM users WHERE email = ?',
-      [email]
-    );
+    const user = await prisma.user.findUnique({
+      where: { email: email }
+    });
+    console.log(user);
+    // // Find user by email
+    // const user = await executeQuerySingle<User>(
+    //   'SELECT id, name, email, passwordHash FROM users WHERE email = ?',
+    //   [email]
+    // );
 
     if (!user) {
       return NextResponse.json(
